@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useRegisterMutation } from "../features/auth/authApi";
 
 const Register = () => {
+  // Error state for response error
+  const [error, setError] = useState("");
+
   // State for form inputs
   const [formData, setFormData] = useState({
     name: "",
@@ -17,7 +21,8 @@ const Register = () => {
     confirmPassword: false,
   }); // Track if password fields have been touched
 
-  const [register, { data, isLoading, error }] = useRegisterMutation();
+  const [register, { data, isLoading, error: responseError }] = useRegisterMutation();
+  const navigate = useNavigate();
 
   // Handle input changes
   const handleChange = (e) => {
@@ -36,7 +41,9 @@ const Register = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const { name, email, password } = formData;
-    if (formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword) {
+
+    // Password mismatch check
+    if (formData.password !== formData.confirmPassword) {
       setPasswordError(true);
     } else {
       setPasswordError(false);
@@ -46,22 +53,16 @@ const Register = () => {
 
   // Show success message or handle error
   useEffect(() => {
-    if (data) {
-      console.log("Registration successful, data:", data);
-      // You can redirect the user or show a success message
-      alert("Registration successful!");
+    if (responseError?.data) {
+      // Checking if there is a specific error message in the response
+      const errorMessage = responseError.data.message || "Registration failed. Please try again.";
+      setError(errorMessage);
     }
 
-    if (error) {
-      console.error("Error occurred during registration:", error);
-      // Handle error based on your backend's error structure
-      if (error.data && error.data.message) {
-        alert(`Error: ${error.data.message}`);
-      } else {
-        alert("An error occurred during registration.");
-      }
+    if (data?.accessToken && data?.user) {
+      navigate("/inbox"); // Redirecting to inbox on successful registration
     }
-  }, [data, error]);
+  }, [data, responseError, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -76,6 +77,13 @@ const Register = () => {
             Create your account
           </h2>
         </div>
+
+        {/* Display API error */}
+        {error && (
+          <div className="text-red-500 text-center mt-4">
+            {error}
+          </div>
+        )}
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm space-y-4">
@@ -147,6 +155,7 @@ const Register = () => {
             </div>
           </div>
 
+          {/* Terms and Conditions Checkbox */}
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <input
@@ -167,19 +176,21 @@ const Register = () => {
           </div>
 
           <div>
+            {/* Display the password mismatch error */}
+            {passwordError && (
+              <div className="mt-2 text-red-500 w-full flex justify-center items-center">
+                Passwords do not match
+              </div>
+            )}
+
+            {/* Submit Button */}
             <button
               type="submit"
               className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              disabled={isLoading}
             >
-              Sign up
+              {isLoading ? "Signing up..." : "Sign up"}
             </button>
-
-            {/* Conditionally render the red line if passwords don't match */}
-            {passwordError && (
-              <div className="mt-2  text-red-500 w-full flex justify-center items-center">
-                Passwords didn't match
-              </div>
-            )}
           </div>
         </form>
       </div>
