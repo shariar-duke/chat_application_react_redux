@@ -1,6 +1,68 @@
-
+import React, { useEffect, useState } from "react";
+import { useRegisterMutation } from "../features/auth/authApi";
 
 const Register = () => {
+  // State for form inputs
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    agreed: false,
+  });
+
+  const [passwordError, setPasswordError] = useState(false); // For showing error when passwords don't match
+  const [touched, setTouched] = useState({
+    password: false,
+    confirmPassword: false,
+  }); // Track if password fields have been touched
+
+  const [register, { data, isLoading, error }] = useRegisterMutation();
+
+  // Handle input changes
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+
+    if (name === "password" || name === "confirmPassword") {
+      setTouched((prevTouched) => ({ ...prevTouched, [name]: true }));
+    }
+  };
+
+  // Handle form submission
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const { name, email, password } = formData;
+    if (formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword) {
+      setPasswordError(true);
+    } else {
+      setPasswordError(false);
+      register({ name, email, password });
+    }
+  };
+
+  // Show success message or handle error
+  useEffect(() => {
+    if (data) {
+      console.log("Registration successful, data:", data);
+      // You can redirect the user or show a success message
+      alert("Registration successful!");
+    }
+
+    if (error) {
+      console.error("Error occurred during registration:", error);
+      // Handle error based on your backend's error structure
+      if (error.data && error.data.message) {
+        alert(`Error: ${error.data.message}`);
+      } else {
+        alert("An error occurred during registration.");
+      }
+    }
+  }, [data, error]);
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-lg">
@@ -15,8 +77,7 @@ const Register = () => {
           </h2>
         </div>
 
-        <form className="mt-8 space-y-6">
-          <input type="hidden" name="remember" value="true" />
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm space-y-4">
             <div>
               <label htmlFor="name" className="sr-only">
@@ -28,6 +89,8 @@ const Register = () => {
                 type="text"
                 autoComplete="name"
                 required
+                value={formData.name}
+                onChange={handleChange}
                 className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 placeholder="Full Name"
               />
@@ -43,6 +106,8 @@ const Register = () => {
                 type="email"
                 autoComplete="email"
                 required
+                value={formData.email}
+                onChange={handleChange}
                 className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 placeholder="Email address"
               />
@@ -58,6 +123,8 @@ const Register = () => {
                 type="password"
                 autoComplete="new-password"
                 required
+                value={formData.password}
+                onChange={handleChange}
                 className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 placeholder="Password"
               />
@@ -72,6 +139,8 @@ const Register = () => {
                 name="confirmPassword"
                 type="password"
                 required
+                value={formData.confirmPassword}
+                onChange={handleChange}
                 className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 placeholder="Confirm Password"
               />
@@ -82,8 +151,10 @@ const Register = () => {
             <div className="flex items-center">
               <input
                 id="accept-terms"
-                name="accept-terms"
+                name="agreed"
                 type="checkbox"
+                checked={formData.agreed}
+                onChange={handleChange}
                 className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
               />
               <label
@@ -102,6 +173,13 @@ const Register = () => {
             >
               Sign up
             </button>
+
+            {/* Conditionally render the red line if passwords don't match */}
+            {passwordError && (
+              <div className="mt-2  text-red-500 w-full flex justify-center items-center">
+                Passwords didn't match
+              </div>
+            )}
           </div>
         </form>
       </div>
