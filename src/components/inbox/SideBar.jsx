@@ -1,17 +1,111 @@
+/* eslint-disable no-unused-vars */
+
+import gravatarUrl from "gravatar-url";
+import moment from "moment";
 import { useState } from "react";
+import { useSelector } from "react-redux";
+import { Link } from "react-router-dom";
+import { useGetConversationsQuery } from "../../features/conversations/conversationsApi";
 import Modal from "./Modal"; // Ensure you import the Modal component
+
 export default function Sidebar() {
   const [modalOpen, setModalOpen] = useState(false);
   const toggleModal = () => {
     setModalOpen((prev) => !prev);
   };
+
+  // Get logged-in user data, especially the email, to pass to the hook
+  const { user } = useSelector((state) => state.auth);
+  const { email } = user || {};
+
+  console.log("The logged-in email is", email);
+
+  // Use the hook to fetch conversations
+  const {
+    data: conversations,
+    isLoading,
+    isError,
+    error,
+  } = useGetConversationsQuery(email);
+
+  // Function to get the partner's name
+  const getUserName = (users) => {
+    if (users) {
+      const otherUser = users.find((user) => user.email !== email);
+      return otherUser ? otherUser.name : "Unknown";
+    }
+    return "Unknown";
+  };
+
+  // Function to get the partner's email
+  const getPartnerEmail = (users) => {
+    if (users) {
+      const otherUser = users.find((user) => user.email !== email);
+      return otherUser ? otherUser.email : "";
+    }
+    return "";
+  };
+
+  // Decide what to render
+  let content = null;
+
+  if (isLoading) {
+    content = (
+      <li className="m-2 text-center text-[16px] font-bold">Loading</li>
+    );
+  } else if (!isLoading && isError) {
+    content = (
+      <li className="m-2 text-center text-[16px] font-bold text-red-500">
+        Error Loading Conversation
+      </li>
+    );
+  } else if (!isLoading && !isError && conversations?.length === 0) {
+    content = (
+      <li className="m-2 text-center text-[16px] font-bold text-red-500">
+        Not Enough Data
+      </li>
+    );
+  } else if (!isLoading && !isError && conversations?.length > 0) {
+    content = conversations.map((conversation) => {
+      const partnerEmail = getPartnerEmail(conversation.users);
+      const gravatar = gravatarUrl(partnerEmail, { size: 200 }); // Generate gravatar URL
+
+      return (
+        <Link to={`/inbox/${conversation?.id}`} key={conversation?.id}>
+          <a className="flex items-center px-3 py-2 text-sm transition duration-150 ease-in-out border-b border-gray-300 cursor-pointer hover:bg-gray-100 focus:outline-none">
+            <img
+              className="object-cover w-10 h-10 rounded-full"
+              src={gravatar} // Use the gravatar URL for the avatar
+              alt={conversation?.participants || "Unknown"}
+            />
+            <div className="w-full pb-2 hidden md:block">
+              <div className="flex justify-between">
+                <span className="block ml-2 font-semibold text-gray-600">
+                  {getUserName(conversation.users)}
+                </span>
+                <span className="block ml-2 text-sm text-gray-600">
+                  {moment(conversation?.timestamp).fromNow()}
+                </span>
+              </div>
+              <span className="block ml-2 text-sm text-gray-600">
+                {conversation?.message || "No message"}
+              </span>
+            </div>
+          </a>
+        </Link>
+      );
+    });
+  }
+
+  console.log("The conversations data is", conversations);
+
   return (
     <div className="w-[100px] h-[100vh] border-r border-t-0 border-gray-300 lg:col-span-1 md:w-full">
       <div className="h-[65px] text-center text-grey-500 p-4 border-b border-gray-300 flex md:justify-end justify-center">
         <svg
           onClick={toggleModal} // Trigger modal toggle on click
           viewBox="0 0 194.436 194.436"
-          className="w-5 h-5 text-grey-500"
+          className="w-5 h-5 text-grey-500 cursor-pointer"
         >
           <path
             d="M192.238,34.545L159.894,2.197C158.487,0.79,156.579,0,154.59,0c-1.989,0-3.897,0.79-5.303,2.196l-32.35,32.35
@@ -30,72 +124,7 @@ export default function Sidebar() {
       </div>
       {/* Modal Component */}
       <Modal open={modalOpen} control={toggleModal} />
-      <ul className="overflow-auto">
-        <li>
-          <a className="flex items-center px-3 py-2 text-sm transition duration-150 ease-in-out border-b border-gray-300 cursor-pointer hover:bg-gray-100 focus:outline-none">
-            <img
-              className="object-cover w-10 h-10 rounded-full"
-              src="https://cdn.pixabay.com/photo/2018/09/12/12/14/man-3672010__340.jpg"
-              alt="Jhon Don"
-            />
-            <div className="w-full pb-2 hidden md:block">
-              <div className="flex justify-between">
-                <span className="block ml-2 font-semibold text-gray-600">
-                  Jhon Don
-                </span>
-                <span className="block ml-2 text-sm text-gray-600">
-                  25 minutes
-                </span>
-              </div>
-              <span className="block ml-2 text-sm text-gray-600">bye</span>
-            </div>
-          </a>
-        </li>
-        <li>
-          <a className="flex items-center px-3 py-2 text-sm transition duration-150 ease-in-out bg-gray-100 border-b border-gray-300 cursor-pointer focus:outline-none">
-            <img
-              className="object-cover w-10 h-10 rounded-full"
-              src="https://cdn.pixabay.com/photo/2016/06/15/15/25/loudspeaker-1459128__340.png"
-              alt="Same"
-            />
-            <div className="w-full pb-2 hidden md:block">
-              <div className="flex justify-between">
-                <span className="block ml-2 font-semibold text-gray-600">
-                  Same
-                </span>
-                <span className="block ml-2 text-sm text-gray-600">
-                  50 minutes
-                </span>
-              </div>
-              <span className="block ml-2 text-sm text-gray-600">
-                Good night
-              </span>
-            </div>
-          </a>
-        </li>
-        <li>
-          <a className="flex items-center px-3 py-2 text-sm transition duration-150 ease-in-out border-b border-gray-300 cursor-pointer hover:bg-gray-100 focus:outline-none">
-            <img
-              className="object-cover w-10 h-10 rounded-full"
-              src="https://cdn.pixabay.com/photo/2018/01/15/07/51/woman-3083383__340.jpg"
-              alt="Emma"
-            />
-            <div className="w-full pb-2 hidden md:block">
-              <div className="flex justify-between">
-                <span className="block ml-2 font-semibold text-gray-600">
-                  Emma
-                </span>
-                <span className="block ml-2 text-sm text-gray-600">
-                  6 hours
-                </span>
-              </div>
-              <span className="block ml-2 text-sm text-gray-600">
-                Good Morning
-              </span>
-            </div>
-          </a>
-        </li>
-      </ul>
+      <ul className="overflow-auto">{content}</ul>
     </div>
   );
 }
