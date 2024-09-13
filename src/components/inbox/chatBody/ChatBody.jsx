@@ -36,9 +36,8 @@ export default function ChatBody() {
     <div className="w-full lg:col-span-2 lg:block h-[90vh] flex flex-col">
     {/* Chat Head (Always at the top) */}
     <ChatHead
-      avatar="https://cdn.pixabay.com/photo/2018/01/15/07/51/woman-3083383__340.jpg"
-      name="Akash Ahmed"
-    />
+        message={messages?.[0] }
+      />
 
     {/* Messages (take the available space and enable scrolling if needed) */}
     <div className="flex-grow overflow-y-auto  h-[calc(100vh_-_197px)]">
