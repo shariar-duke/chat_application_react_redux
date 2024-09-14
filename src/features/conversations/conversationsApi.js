@@ -9,7 +9,13 @@ export const conversationsApi = apiSlice.injectEndpoints({
           import.meta.env.VITE_CONVERSATION_PER_PAGE
         }`,
     }),
+
+    getConversation: builder.query({
+      query: ({ userEmail, participantEmail }) =>
+        `/conversations?participants_like=${userEmail}-${participantEmail}&participants_like=${participantEmail}-${userEmail}`,
+    }),
+    
   }),
 });
 
-export const { useGetConversationsQuery } = conversationsApi;
+export const { useGetConversationsQuery , useGetConversationQuery } = conversationsApi;

@@ -47,6 +47,12 @@
       "password": "$2a$10$oOBxU1PZkUfaUDguLIzitOesHPxc4uNfGIAB27aCXW/oJFBh5aeGu",
       "name": "Topu",
       "id": 8
+    },
+    {
+      "email": "tithi@gmail.com",
+      "password": "$2a$10$GpqOQ5pIqNj87eloRgFwa.raSAEaYqxGxQZGbH7VXRJMgF51VCEeu",
+      "name": "tithi",
+      "id": 9
     }
   ],
   "conversations": [
