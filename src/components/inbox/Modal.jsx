@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { conversationsApi } from "../../features/conversations/conversationsApi";
+import { conversationsApi, useAddConversationMutation, useEditConversationMutation } from "../../features/conversations/conversationsApi";
 import { useGetUserQuery } from "../../features/users/usersApi";
 import isValidEmail from "../../utils/isValidEmail";
 
@@ -29,6 +29,9 @@ export default function Modal({ open, control }) {
     };
   };
 
+  const [addConversation, {isSuccess:isAddConversationSuccess}] = useAddConversationMutation()
+  const [editConversation, {isSuccess:isEditConversationSuccess}] = useEditConversationMutation()
+
   useEffect(() => {
     if (participant?.length > 0 && participant[0].email !== myEmail) {
       // check conversation existence
@@ -52,9 +55,6 @@ export default function Modal({ open, control }) {
   const doSearch = (value) => {
     if (isValidEmail(value)) {
       // check user API
-
-     
-
       setUserCheck(true);
       setTo(value);
     }
@@ -65,7 +65,25 @@ export default function Modal({ open, control }) {
   const handleSubmit =(e)=> 
   {
     e.preventDefault()
-    console.log("Form submitted")
+   if(conversation?.length > 0) 
+   {
+    // editConversation
+    editConversation({
+        id:conversation[0]?.id,
+        data:{
+            participants:`${myEmail}-${participant[0].email}`,
+            users:[loggedInUser, participant[0]],
+            message:message,
+            timestamp: new Date().getTime()
+        }
+    })
+   }
+
+//    else if(conversation?.length ===0) 
+//    {
+  
+//     addConversation()
+//    }
   }
 
   return (
