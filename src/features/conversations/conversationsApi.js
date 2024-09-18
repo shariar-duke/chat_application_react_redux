@@ -34,7 +34,9 @@ export const conversationsApi = apiSlice.injectEndpoints({
                 draftConversation.message = arg.data.message;
                 draftConversation.timestamp = arg.data.timestamp;
               } else {
-                console.warn(`Conversation with id ${arg.data.id} not found in cache`);
+                console.warn(
+                  `Conversation with id ${arg.data.id} not found in cache`
+                );
               }
             }
           )
@@ -45,7 +47,9 @@ export const conversationsApi = apiSlice.injectEndpoints({
           if (conversation?.data?.id) {
             const users = arg.data.users || [];
             const senderUser = users.find((user) => user.email === arg.sender);
-            const receiverUser = users.find((user) => user.email !== arg.sender);
+            const receiverUser = users.find(
+              (user) => user.email !== arg.sender
+            );
 
             try {
               const messageResponse = await dispatch(
@@ -57,7 +61,6 @@ export const conversationsApi = apiSlice.injectEndpoints({
                   timestamp: arg?.data?.timestamp,
                 })
               ).unwrap();
-
 
               console.log("Message added or updated:", messageResponse);
             } catch (err) {
@@ -78,7 +81,7 @@ export const conversationsApi = apiSlice.injectEndpoints({
         method: "PATCH",
         body: data,
       }),
-    
+
       async onQueryStarted(arg, { queryFulfilled, dispatch }) {
         // Optimistic update for conversation cache
         const pathResult1 = dispatch(
@@ -86,9 +89,7 @@ export const conversationsApi = apiSlice.injectEndpoints({
             "getConversations",
             arg.sender,
             (draft) => {
-              const draftConversation = draft.find(
-                (c) => c.id === arg.id
-              );
+              const draftConversation = draft.find((c) => c.id == arg.id);
               if (draftConversation) {
                 draftConversation.message = arg.data.message;
                 draftConversation.timestamp = arg.data.timestamp;
@@ -96,39 +97,32 @@ export const conversationsApi = apiSlice.injectEndpoints({
             }
           )
         );
-    
+
         try {
           const conversation = await queryFulfilled;
-          if (conversation?.data?.id) {
+          if (conversation?.data && conversation.data.id) {
+            console.log("The conversation id is", conversation?.data?.id);
             const users = arg.data.users || [];
             const senderUser = users.find((user) => user.email === arg.sender);
-            const receiverUser = users.find((user) => user.email !== arg.sender);
-    
-            try {
-              const messageResponse = await dispatch(
-                messagesApi.endpoints.addMessages.initiate({
-                  conversationId: conversation?.data?.id,
-                  sender: senderUser,
-                  receiver: receiverUser,
-                  message: arg.data.message,
-                  timestamp: arg.data.timestamp,
-                })
-              ).unwrap();
-    
-              console.log("Message added or updated:", messageResponse);
-            } catch (err) {
-              console.error("Failed to post message:", err);
-              pathResult1.undo(); // Roll back optimistic update if message fails
-            }
+            const receiverUser = users.find(
+              (user) => user.email !== arg.sender
+            );
+
+            dispatch(
+              messagesApi.endpoints.addMessages.initiate({
+                conversationId: conversation?.data?.id,
+                sender: senderUser,
+                receiver: receiverUser,
+                message: arg.data.message,
+                timestamp: arg.data.timestamp,
+              })
+            );
           }
         } catch (err) {
           pathResult1.undo();
-          console.error("Error while editing conversation:", err);
         }
       },
     }),
-    
-    
   }),
 });
 
