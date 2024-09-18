@@ -8,9 +8,6 @@ export default function ChatBody() {
   const { id } = useParams();
   const { data: messages, isLoading, isError, error } = useGetMessagesQuery(id);
 
-
-
-
   // Conditional rendering for the message content
   let messageContent = null;
 
@@ -34,21 +31,18 @@ export default function ChatBody() {
 
   return (
     <div className="w-full lg:col-span-2 lg:block h-[90vh] flex flex-col">
-    {/* Chat Head (Always at the top) */}
-    <ChatHead
-        message={messages?.[0] }
-      />
+      {/* Chat Head (Always at the top) */}
+      <ChatHead message={messages?.[0]} />
 
-    {/* Messages (take the available space and enable scrolling if needed) */}
-    <div className="flex-grow overflow-y-auto  h-[calc(100vh_-_197px)]">
-      {messageContent}
-    </div>
+      {/* Messages (take the available space and enable scrolling if needed) */}
+      <div className="flex-grow overflow-y-auto  h-[calc(100vh_-_197px)]">
+        {messageContent}
+      </div>
 
-    {/* Options (always at the bottom) */}
-    <div>
-      <Options />
+      {/* Options (always at the bottom) */}
+      <div>
+        <Options info={messages?.[0]} />
+      </div>
     </div>
-  </div>
-);
+  );
 }
-
