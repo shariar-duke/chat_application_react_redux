@@ -1,3 +1,4 @@
+const cors = require('cors');
 const auth = require("json-server-auth");
 const jsonServer = require("json-server");
 
@@ -11,6 +12,10 @@ server.db = router.db;
 
 server.use(middlewares);
 
+// Use CORS middleware
+server.use(cors());
+
+// Authentication rules
 const rules = auth.rewriter({
     users: 640,
     conversations: 660,
@@ -21,4 +26,6 @@ server.use(rules);
 server.use(auth);
 server.use(router);
 
-server.listen(port);
+server.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+});
