@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { conversationsApi, useAddConversationMutation, useEditConversationMutation } from "../../features/conversations/conversationsApi";
+import {
+    conversationsApi,
+    useAddConversationMutation,
+    useEditConversationMutation,
+} from "../../features/conversations/conversationsApi";
 import { useGetUserQuery } from "../../features/users/usersApi";
 import isValidEmail from "../../utils/isValidEmail";
 
@@ -11,7 +15,7 @@ export default function Modal({ open, control }) {
   const { user: loggedInUser } = useSelector((state) => state.auth) || {};
   const { email: myEmail } = loggedInUser || {};
   const [responseError, setResponseError] = useState("");
-  const [conversation, setConversation] = useState(undefined)
+  const [conversation, setConversation] = useState(undefined);
   const dispatch = useDispatch();
 
   const {
@@ -29,19 +33,19 @@ export default function Modal({ open, control }) {
     };
   };
 
-  const [addConversation, {isSuccess:isAddConversationSuccess}] = useAddConversationMutation()
-  const [editConversation, {isSuccess:isEditConversationSuccess}] = useEditConversationMutation()
+  const [addConversation, { isSuccess: isAddConversationSuccess }] =
+    useAddConversationMutation();
+  const [editConversation, { isSuccess: isEditConversationSuccess }] =
+    useEditConversationMutation();
 
-
-  // listen conversation add/edit success 
-// ei useEffect a modal take off korabe 
-  useEffect(()=> {
-    if(isAddConversationSuccess || isEditConversationSuccess) 
-    {
-        control()
+  // listen conversation add/edit success
+  // ei useEffect a modal take off korabe
+  useEffect(() => {
+    if (isAddConversationSuccess || isEditConversationSuccess) {
+      control();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[isAddConversationSuccess, isEditConversationSuccess])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAddConversationSuccess, isEditConversationSuccess]);
 
   useEffect(() => {
     if (participant?.length > 0 && participant[0].email !== myEmail) {
@@ -53,9 +57,9 @@ export default function Modal({ open, control }) {
         })
       )
         .unwrap()
-        .then((data)=> {
-          console.log("The message data is", data)
-          setConversation(data)
+        .then((data) => {
+          console.log("The message data is", data);
+          setConversation(data);
         })
         .catch((err) => {
           setResponseError("There was a problem");
@@ -73,34 +77,32 @@ export default function Modal({ open, control }) {
 
   const handleSearch = debounceHandler(doSearch, 500);
 
-  const handleSubmit =(e)=> 
-  {
-    e.preventDefault()
-   if(conversation?.length > 0) 
-   {
-    // editConversation
-    editConversation({
-        id:conversation[0]?.id,
-        data:{
-            participants:`${myEmail}-${participant[0].email}`,
-            users:[loggedInUser, participant[0]],
-            message:message,
-            timestamp: new Date().getTime()
-        }
-    })
-   }
-
-   else if(conversation?.length ===0) 
-   {
-  
-    addConversation({
-        participants:`${myEmail}-${participant[0].email}`,
-        users:[loggedInUser, participant[0]],
-        message:message,
-        timestamp: new Date().getTime()
-    })
-   }
-  }
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (conversation?.length > 0) {
+      // editConversation
+      editConversation({
+        id: conversation[0]?.id,
+        sender: myEmail,
+        data: {
+          participants: `${myEmail}-${participant[0].email}`,
+          users: [loggedInUser, participant[0]],
+          message: message,
+          timestamp: new Date().getTime(),
+        },
+      });
+    } else if (conversation?.length === 0) {
+      addConversation({
+        sender: myEmail,
+        data: {
+          participants: `${myEmail}-${participant[0].email}`,
+          users: [loggedInUser, participant[0]],
+          message: message,
+          timestamp: new Date().getTime(),
+        },
+      });
+    }
+  };
 
   return (
     open && (
@@ -154,7 +156,10 @@ export default function Modal({ open, control }) {
                     ? "cursor-not-allowed bg-gray-400 text-gray-700"
                     : "cursor-pointer text-white bg-violet-600 hover:bg-violet-700 focus:ring-violet-500"
                 }`}
-                disabled={conversation == undefined || (participant?.length > 0 && participant[0].email === myEmail)}
+                disabled={
+                  conversation == undefined ||
+                  (participant?.length > 0 && participant[0].email === myEmail)
+                }
               >
                 Send Message
               </button>
