@@ -15,6 +15,7 @@ export default function Options({ info }) {
     info?.receiver?.email !== loggedInUser?.email
       ? info?.receiver
       : info?.sender;
+      
   console.log("The Particpant User", participantUser);
   const handleSubmit = (e) => {
     e.preventDefault();
