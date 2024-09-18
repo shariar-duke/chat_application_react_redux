@@ -49,34 +49,55 @@ export const conversationsApi = apiSlice.injectEndpoints({
     }),
 
     editConversation: builder.mutation({
-      query: ({ id, data , sender}) => ({
-        url: `/conversations/${id}`,
-        method: "PATCH",
-        body: data,
+      query: ({ id, data, sender }) => ({
+          url: `/conversations/${id}`,
+          method: "PATCH",
+          body: data,
       }),
       async onQueryStarted(arg, { queryFulfilled, dispatch }) {
-        try {
-          const conversation = await queryFulfilled;
-          if (conversation?.data?.id) {
-            const users = arg.data.users || [];
-            const senderUser = users.find((user) => user.email === arg.sender);
-            const receiverUser = users.find((user) => user.email !== arg.sender);
-            dispatch(
-              messagesApi.endpoints.addMessages.initiate({
-                conversationId: conversation?.data?.id,
-                sender: senderUser,
-                receiver: receiverUser,
-                message: arg.data.message,
-                timestamp: arg.data.timestamp,
-              })
-            );
+          // optimistic cache update start
+          const pathResult1 = dispatch(
+              apiSlice.util.updateQueryData(
+                  "getConversations",
+                  arg.sender,
+                  (draft) => {
+                      const draftConversation = draft.find(
+                          (c) => c.id == arg.id
+                      );
+                      draftConversation.message = arg.data.message;
+                      draftConversation.timestamp = arg.data.timestamp;
+                  }
+              )
+          );
+          // optimistic cache update end
+
+          try {
+              const conversation = await queryFulfilled;
+              if (conversation?.data?.id) {
+                  // silent entry to message table
+                  const users = arg.data.users;
+                  const senderUser = users.find(
+                      (user) => user.email === arg.sender
+                  );
+                  const receiverUser = users.find(
+                      (user) => user.email !== arg.sender
+                  );
+
+                  dispatch(
+                      messagesApi.endpoints.addMessages.initiate({
+                          conversationId: conversation?.data?.id,
+                          sender: senderUser,
+                          receiver: receiverUser,
+                          message: arg.data.message,
+                          timestamp: arg.data.timestamp,
+                      })
+                  );
+              }
+          } catch (err) {
+              pathResult1.undo();
           }
-        } catch (error) {
-          console.error("Error while updating conversation: ", error);
-        }
-      }
-      
-    }),
+      },
+  }),
   }),
 });
 
