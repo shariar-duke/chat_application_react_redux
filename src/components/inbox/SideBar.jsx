@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { useGetConversationsQuery } from "../../features/conversations/conversationsApi";
-import Modal from "./Modal"; // Ensure you import the Modal component
+import Modal from "./Modal";
 
 export default function Sidebar() {
   const [modalOpen, setModalOpen] = useState(false);

@@ -32,6 +32,17 @@ export default function Modal({ open, control }) {
   const [addConversation, {isSuccess:isAddConversationSuccess}] = useAddConversationMutation()
   const [editConversation, {isSuccess:isEditConversationSuccess}] = useEditConversationMutation()
 
+
+  // listen conversation add/edit success 
+// ei useEffect a modal take off korabe 
+  useEffect(()=> {
+    if(isAddConversationSuccess || isEditConversationSuccess) 
+    {
+        control()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[isAddConversationSuccess, isEditConversationSuccess])
+
   useEffect(() => {
     if (participant?.length > 0 && participant[0].email !== myEmail) {
       // check conversation existence
@@ -79,11 +90,16 @@ export default function Modal({ open, control }) {
     })
    }
 
-//    else if(conversation?.length ===0) 
-//    {
+   else if(conversation?.length ===0) 
+   {
   
-//     addConversation()
-//    }
+    addConversation({
+        participants:`${myEmail}-${participant[0].email}`,
+        users:[loggedInUser, participant[0]],
+        message:message,
+        timestamp: new Date().getTime()
+    })
+   }
   }
 
   return (
