@@ -9,14 +9,13 @@ export default function Options({ info }) {
   const { email: myEmail } = loggedInUser || {};
   const [editConversation, { isSuccess }] = useEditConversationMutation();
 
-  console.log("The information is", info);
+
 
   const participantUser =
     info?.receiver?.email !== loggedInUser?.email
       ? info?.receiver
       : info?.sender;
-      
-  console.log("The Particpant User", participantUser);
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
