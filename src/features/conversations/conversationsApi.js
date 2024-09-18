@@ -58,23 +58,6 @@ export const conversationsApi = apiSlice.injectEndpoints({
                 })
               ).unwrap();
 
-              // Pessimistic update for messages cache
-              // dispatch(
-              //   messagesApi.util.updateQueryData(
-              //     "getMessages",
-              //     messageResponse.conversationId.toString(),
-              //     (draft) => {
-              //       // Ensure message is not already in the draft
-              //       const existingMessage = draft.find(
-              //         (msg) => msg.id === messageResponse.id
-              //       );
-              //       if (!existingMessage) {
-              //         draft.push(messageResponse);
-              //       }
-              //       console.log("Updated messages draft:", draft);
-              //     }
-              //   )
-              // );
 
               console.log("Message added or updated:", messageResponse);
             } catch (err) {
@@ -109,8 +92,6 @@ export const conversationsApi = apiSlice.injectEndpoints({
               if (draftConversation) {
                 draftConversation.message = arg.data.message;
                 draftConversation.timestamp = arg.data.timestamp;
-              } else {
-                console.warn(`Conversation with id ${arg.id} not found in cache`);
               }
             }
           )
@@ -126,7 +107,7 @@ export const conversationsApi = apiSlice.injectEndpoints({
             try {
               const messageResponse = await dispatch(
                 messagesApi.endpoints.addMessages.initiate({
-                  conversationId: conversation.data.id,
+                  conversationId: conversation?.data?.id,
                   sender: senderUser,
                   receiver: receiverUser,
                   message: arg.data.message,
@@ -134,30 +115,10 @@ export const conversationsApi = apiSlice.injectEndpoints({
                 })
               ).unwrap();
     
-              // Pessimistic update for messages cache
-              dispatch(
-                messagesApi.util.updateQueryData(
-                  "getMessages",
-                  messageResponse.conversationId.toString(),
-                  (draft) => {
-                    // Ensure message is not already in the draft
-                    const existingMessage = draft.find(
-                      (msg) => msg.id === messageResponse.id
-                    );
-                    if (!existingMessage) {
-                      draft.push(messageResponse);
-                    }
-                    console.log("Updated messages draft:", draft);
-                  }
-                )
-              );
-    
               console.log("Message added or updated:", messageResponse);
             } catch (err) {
               console.error("Failed to post message:", err);
-              // Roll back optimistic update if message addition fails
-              pathResult1.undo();
-              // Optionally handle retries or recovery here
+              pathResult1.undo(); // Roll back optimistic update if message fails
             }
           }
         } catch (err) {
@@ -166,6 +127,7 @@ export const conversationsApi = apiSlice.injectEndpoints({
         }
       },
     }),
+    
     
   }),
 });
