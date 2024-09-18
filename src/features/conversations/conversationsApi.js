@@ -1,5 +1,3 @@
-/* eslint-disable no-unused-vars */
-
 import { apiSlice } from "../api/apiSlice";
 import { messagesApi } from "../messages/messagesApi";
 
@@ -25,79 +23,150 @@ export const conversationsApi = apiSlice.injectEndpoints({
       }),
 
       async onQueryStarted(arg, { queryFulfilled, dispatch }) {
+        // Optimistic update for conversation cache
+        const pathResult1 = dispatch(
+          apiSlice.util.updateQueryData(
+            "getConversations",
+            arg.sender,
+            (draft) => {
+              const draftConversation = draft.find((c) => c.id === arg.data.id);
+              if (draftConversation) {
+                draftConversation.message = arg.data.message;
+                draftConversation.timestamp = arg.data.timestamp;
+              } else {
+                console.warn(`Conversation with id ${arg.data.id} not found in cache`);
+              }
+            }
+          )
+        );
+
         try {
           const conversation = await queryFulfilled;
           if (conversation?.data?.id) {
             const users = arg.data.users || [];
             const senderUser = users.find((user) => user.email === arg.sender);
             const receiverUser = users.find((user) => user.email !== arg.sender);
-            dispatch(
-              messagesApi.endpoints.addMessages.initiate({
-                conversationId: conversation?.data?.id,
-                sender: senderUser,
-                receiver: receiverUser,
-                message: arg.data.message,
-                timestamp: arg.data.timestamp,
-              })
-            );
+
+            try {
+              const messageResponse = await dispatch(
+                messagesApi.endpoints.addMessages.initiate({
+                  conversationId: conversation?.data?.id,
+                  sender: senderUser,
+                  receiver: receiverUser,
+                  message: arg?.data?.message,
+                  timestamp: arg?.data?.timestamp,
+                })
+              ).unwrap();
+
+              // Pessimistic update for messages cache
+              // dispatch(
+              //   messagesApi.util.updateQueryData(
+              //     "getMessages",
+              //     messageResponse.conversationId.toString(),
+              //     (draft) => {
+              //       // Ensure message is not already in the draft
+              //       const existingMessage = draft.find(
+              //         (msg) => msg.id === messageResponse.id
+              //       );
+              //       if (!existingMessage) {
+              //         draft.push(messageResponse);
+              //       }
+              //       console.log("Updated messages draft:", draft);
+              //     }
+              //   )
+              // );
+
+              console.log("Message added or updated:", messageResponse);
+            } catch (err) {
+              console.error("Failed to post message:", err);
+              // Optionally handle retries or recovery here
+            }
           }
-        } catch (error) {
-          console.error("Error while updating conversation: ", error);
+        } catch (err) {
+          pathResult1.undo();
+          console.error("Error while adding conversation:", err);
         }
-      }
-      
+      },
     }),
 
     editConversation: builder.mutation({
       query: ({ id, data, sender }) => ({
-          url: `/conversations/${id}`,
-          method: "PATCH",
-          body: data,
+        url: `/conversations/${id}`,
+        method: "PATCH",
+        body: data,
       }),
+    
       async onQueryStarted(arg, { queryFulfilled, dispatch }) {
-          // optimistic cache update start
-          const pathResult1 = dispatch(
-              apiSlice.util.updateQueryData(
-                  "getConversations",
-                  arg.sender,
-                  (draft) => {
-                      const draftConversation = draft.find(
-                          (c) => c.id == arg.id
-                      );
-                      draftConversation.message = arg.data.message;
-                      draftConversation.timestamp = arg.data.timestamp;
-                  }
-              )
-          );
-          // optimistic cache update end
-
-          try {
-              const conversation = await queryFulfilled;
-              if (conversation?.data?.id) {
-                  // silent entry to message table
-                  const users = arg.data.users;
-                  const senderUser = users.find(
-                      (user) => user.email === arg.sender
-                  );
-                  const receiverUser = users.find(
-                      (user) => user.email !== arg.sender
-                  );
-
-                  dispatch(
-                      messagesApi.endpoints.addMessages.initiate({
-                          conversationId: conversation?.data?.id,
-                          sender: senderUser,
-                          receiver: receiverUser,
-                          message: arg.data.message,
-                          timestamp: arg.data.timestamp,
-                      })
-                  );
+        // Optimistic update for conversation cache
+        const pathResult1 = dispatch(
+          apiSlice.util.updateQueryData(
+            "getConversations",
+            arg.sender,
+            (draft) => {
+              const draftConversation = draft.find(
+                (c) => c.id === arg.id
+              );
+              if (draftConversation) {
+                draftConversation.message = arg.data.message;
+                draftConversation.timestamp = arg.data.timestamp;
+              } else {
+                console.warn(`Conversation with id ${arg.id} not found in cache`);
               }
-          } catch (err) {
+            }
+          )
+        );
+    
+        try {
+          const conversation = await queryFulfilled;
+          if (conversation?.data?.id) {
+            const users = arg.data.users || [];
+            const senderUser = users.find((user) => user.email === arg.sender);
+            const receiverUser = users.find((user) => user.email !== arg.sender);
+    
+            try {
+              const messageResponse = await dispatch(
+                messagesApi.endpoints.addMessages.initiate({
+                  conversationId: conversation.data.id,
+                  sender: senderUser,
+                  receiver: receiverUser,
+                  message: arg.data.message,
+                  timestamp: arg.data.timestamp,
+                })
+              ).unwrap();
+    
+              // Pessimistic update for messages cache
+              dispatch(
+                messagesApi.util.updateQueryData(
+                  "getMessages",
+                  messageResponse.conversationId.toString(),
+                  (draft) => {
+                    // Ensure message is not already in the draft
+                    const existingMessage = draft.find(
+                      (msg) => msg.id === messageResponse.id
+                    );
+                    if (!existingMessage) {
+                      draft.push(messageResponse);
+                    }
+                    console.log("Updated messages draft:", draft);
+                  }
+                )
+              );
+    
+              console.log("Message added or updated:", messageResponse);
+            } catch (err) {
+              console.error("Failed to post message:", err);
+              // Roll back optimistic update if message addition fails
               pathResult1.undo();
+              // Optionally handle retries or recovery here
+            }
           }
+        } catch (err) {
+          pathResult1.undo();
+          console.error("Error while editing conversation:", err);
+        }
       },
-  }),
+    }),
+    
   }),
 });
 
