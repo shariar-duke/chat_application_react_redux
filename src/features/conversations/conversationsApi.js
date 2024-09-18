@@ -1,5 +1,7 @@
- 
+/* eslint-disable no-unused-vars */
+
 import { apiSlice } from "../api/apiSlice";
+import { messagesApi } from "../messages/messagesApi";
 
 export const conversationsApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
@@ -16,24 +18,71 @@ export const conversationsApi = apiSlice.injectEndpoints({
     }),
 
     addConversation: builder.mutation({
-      query:(data)=> ({
-        url:"/conversations",
-        method:"POST",
-        body:data
+      query: ({ sender, data }) => ({
+        url: "/conversations",
+        method: "POST",
+        body: data,
+      }),
 
-      })
+      async onQueryStarted(arg, { queryFulfilled, dispatch }) {
+        try {
+          const conversation = await queryFulfilled;
+          if (conversation?.data?.id) {
+            const users = arg.data.users || [];
+            const senderUser = users.find((user) => user.email === arg.sender);
+            const receiverUser = users.find((user) => user.email !== arg.sender);
+            dispatch(
+              messagesApi.endpoints.addMessages.initiate({
+                conversationId: conversation?.data?.id,
+                sender: senderUser,
+                receiver: receiverUser,
+                message: arg.data.message,
+                timestamp: arg.data.timestamp,
+              })
+            );
+          }
+        } catch (error) {
+          console.error("Error while updating conversation: ", error);
+        }
+      }
+      
     }),
 
     editConversation: builder.mutation({
-      query:({id, data})=> ({
-        url:`/conversations/${id}`,
-        method:"PATCH",
-        body:data
-
-      })
+      query: ({ id, data , sender}) => ({
+        url: `/conversations/${id}`,
+        method: "PATCH",
+        body: data,
+      }),
+      async onQueryStarted(arg, { queryFulfilled, dispatch }) {
+        try {
+          const conversation = await queryFulfilled;
+          if (conversation?.data?.id) {
+            const users = arg.data.users || [];
+            const senderUser = users.find((user) => user.email === arg.sender);
+            const receiverUser = users.find((user) => user.email !== arg.sender);
+            dispatch(
+              messagesApi.endpoints.addMessages.initiate({
+                conversationId: conversation?.data?.id,
+                sender: senderUser,
+                receiver: receiverUser,
+                message: arg.data.message,
+                timestamp: arg.data.timestamp,
+              })
+            );
+          }
+        } catch (error) {
+          console.error("Error while updating conversation: ", error);
+        }
+      }
+      
     }),
-    
   }),
 });
 
-export const { useGetConversationsQuery , useGetConversationQuery , useAddConversationMutation, useEditConversationMutation } = conversationsApi;
+export const {
+  useGetConversationsQuery,
+  useGetConversationQuery,
+  useAddConversationMutation,
+  useEditConversationMutation,
+} = conversationsApi;
