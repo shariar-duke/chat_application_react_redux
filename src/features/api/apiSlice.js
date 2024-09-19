@@ -6,6 +6,7 @@ export const apiSlice = createApi({
     baseUrl: import.meta.env.VITE_API_URL,  // Correct Vite way to access env variables
     prepareHeaders: (headers, { getState }) => {
       const token = getState()?.auth?.accessToken;
+      console.log('Token in prepareHeaders:', token); 
       if (token) {
         headers.set("Authorization", `Bearer ${token}`);
       }

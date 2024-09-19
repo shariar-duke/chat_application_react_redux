@@ -62,7 +62,19 @@ export const conversationsApi = apiSlice.injectEndpoints({
                 })
               ).unwrap();
 
-              console.log("Message added or updated:", messageResponse);
+             // update messages cache pessimistically start
+          //    dispatch(
+          //     apiSlice.util.updateQueryData(
+          //         "getMessages",
+          //         messageResponse.conversationId.toString(),
+          //         (draft) => {
+          //             draft.push(messageResponse);
+          //         }
+          //     )
+          // );
+          // update messages cache pessimistically end
+
+
             } catch (err) {
               console.error("Failed to post message:", err);
               // Optionally handle retries or recovery here

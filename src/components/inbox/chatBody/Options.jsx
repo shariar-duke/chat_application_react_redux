@@ -9,6 +9,7 @@ export default function Options({ info }) {
   const { email: myEmail } = loggedInUser || {};
   const [editConversation, { isSuccess }] = useEditConversationMutation();
 
+//   console.log(localStorage.getItem('auth'));
 
 
   const participantUser =
